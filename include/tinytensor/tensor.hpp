@@ -3,10 +3,16 @@
 #include <stdexcept>
 #include <vector>
 #include <memory>
+#include <utility> 
+
 
 namespace tinytensor {
 
+    class TensorImpl;
     class GradFn;
+
+    using GradResult = 
+        std::pair<std::shared_ptr<TensorImpl>, TensorImpl>;
 
     class TensorImpl {
     public:
@@ -20,6 +26,8 @@ namespace tinytensor {
         
 
         explicit TensorImpl(std::vector<size_t> shape);
+        TensorImpl(const TensorImpl& other);
+        
         TensorImpl add(const TensorImpl& other) const;
         TensorImpl relu() const;
         void accumulate_grad(const TensorImpl& gradient);
@@ -28,11 +36,11 @@ namespace tinytensor {
     };
 
 
+
     class GradFn {
         public:
-            virtual void backward(const TensorImpl& grad) = 0;
+            virtual std::vector<GradResult> backward(const TensorImpl& grad) = 0;
             virtual ~GradFn() = default;
-            virtual std::vector<std::shared_ptr<TensorImpl>> parents() const = 0;
 
     };
 

@@ -9,26 +9,20 @@
 namespace tinytensor {
 
 
+
+
     class AddBackward : public GradFn {
     public:
         
         AddBackward(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b)
             : a(std::move(a)), b(std::move(b)) {}
         
-        void backward(const TensorImpl& grad) override{
+        std::vector<GradResult> backward(const TensorImpl& grad) override{
 
-            if (a->requires_grad){
-                a->accumulate_grad(grad);
-            }
-            if (b->requires_grad){
-                b->accumulate_grad(grad);
-            }
+            return {{a, grad}, {b, grad}};
             
         }
 
-        std::vector<std::shared_ptr<TensorImpl>> parents() const override{
-            return {a, b};
-        }
 
     private:
 
@@ -44,7 +38,7 @@ namespace tinytensor {
         ReluBackward(std::shared_ptr<TensorImpl> a)
             : a(std::move(a)) {}
         
-        void backward(const TensorImpl& grad) override{
+        std::vector<GradResult> backward(const TensorImpl& grad) override{
             
             if (!a->requires_grad) return;
             TensorImpl output_grad(grad.shape);
@@ -53,13 +47,10 @@ namespace tinytensor {
                 output_grad.data[i] = (a->data[i] > 0.f) ? grad.data[i] : 0.f;
             }
 
-            a->accumulate_grad(output_grad);
+            return {{a, output_grad}};
             
         }
 
-        std::vector<std::shared_ptr<TensorImpl>> parents() const override{
-            return {a};
-        }
 
     private:
 
@@ -69,6 +60,13 @@ namespace tinytensor {
     };
 
 
+
+    TensorImpl::TensorImpl(const TensorImpl& other)
+        : data(other.data),
+        shape(other.shape),
+        requires_grad(false),
+        grad(nullptr),
+        grad_fn(nullptr) {}
 
     TensorImpl::TensorImpl(std::vector<size_t> shape) 
         : shape(std::move(shape)) {
