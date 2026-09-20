@@ -3,6 +3,7 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_set>
+#include <unordered_map>
 
 #include <tinytensor/tensor.hpp>
 
@@ -41,7 +42,7 @@ namespace tinytensor
         {
 
             if (!a->requires_grad)
-                return;
+                return {};
             TensorImpl output_grad(grad.shape);
 
             for (size_t i = 0; i < grad.data.size(); i++)
@@ -207,6 +208,8 @@ namespace tinytensor
             result.data[i] = data[i] * scalar;
         }
 
+        return result;
+
     }
 
     TensorImpl TensorImpl::multiply(const TensorImpl &other) const
@@ -246,7 +249,19 @@ namespace tinytensor
         return result;
     };
 
+    TensorImpl TensorImpl::transpose () const {
+        if (shape.size() != 2){
+            throw std::invalid_argument("Transpose currently supports only 2D tensors");
+        }
+        TensorImpl result({shape[1], shape[0]});
 
+        for (size_t i = 0; i < shape[1]; i++){
+            for (size_t j = 0; j < shape[0]; j++){
+                result.data[i * shape[0] + j] = data[j*shape[1] + i];
+            }
+        }
+        return result;
+    }
 
     Tensor::Tensor(std::vector<size_t> shape)
         : impl(std::make_shared<TensorImpl>(std::move(shape))) {};
@@ -294,7 +309,7 @@ namespace tinytensor
         result.impl->requires_grad = impl->requires_grad || other.impl->requires_grad;
 
         if (result.impl->requires_grad){
-            result.impl->grad_fn = std::make_shared<MulBackward>(impl, other);
+            result.impl->grad_fn = std::make_shared<MulBackward>(impl, other.impl);
         }
 
         return result;
@@ -307,7 +322,7 @@ namespace tinytensor
         result.impl->requires_grad = impl->requires_grad || other.impl->requires_grad;
 
         if (result.impl->requires_grad){
-            result.impl->grad_fn = std::make_shared<MatMulBackward>(impl, other);
+            result.impl->grad_fn = std::make_shared<MatMulBackward>(impl, other.impl);
         }
 
         return result;
