@@ -18,7 +18,10 @@ namespace tinytensor {
         std::unique_ptr<TensorImpl> grad;
         std::shared_ptr<GradFn> grad_fn;
         
+
         explicit TensorImpl(std::vector<size_t> shape);
+        TensorImpl add(const TensorImpl& other) const;
+        TensorImpl relu() const;
         void accumulate_grad(const TensorImpl& gradient);
 
 
@@ -29,14 +32,17 @@ namespace tinytensor {
         public:
             virtual void backward(const TensorImpl& grad) = 0;
             virtual ~GradFn() = default;
+            virtual std::vector<std::shared_ptr<TensorImpl>> parents() const = 0;
 
     };
 
     class Tensor {
 
         public:
+            explicit Tensor(std::shared_ptr<TensorImpl> impl);
             explicit Tensor(std::vector<size_t> shape);
             Tensor operator+(const Tensor& other) const;
+            Tensor relu() const;
 
 
         private:
