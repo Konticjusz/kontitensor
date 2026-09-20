@@ -61,6 +61,68 @@ namespace tinytensor
         std::shared_ptr<TensorImpl> a;
     };
 
+    class ScalarMulBackward : public GradFn{
+    public:
+        ScalarMulBackward(std::shared_ptr<TensorImpl> parent, float scalar)
+        : parent(std::move(parent)), scalar(scalar) {}
+
+        std::vector<GradResult> backward(const TensorImpl &grad) override {
+
+            return {{parent, grad.multiply(scalar)}};
+
+        }
+        std::vector<std::shared_ptr<TensorImpl>> parents() const override
+        {
+            return {parent};
+        }
+
+
+    private:
+        std::shared_ptr<TensorImpl> parent;
+        float scalar;
+    };
+
+
+    class MulBackward : public GradFn{
+    public:
+        MulBackward(std::shared_ptr<TensorImpl> a, std::shared_ptr<TensorImpl> b)
+        : a(std::move(a)), b(std::move(b)) {}
+
+        std::vector<GradResult> backward(const TensorImpl &grad) override {
+            // TODO: returns grad for parents that may not need it.
+            return {{a, grad.multiply(*b)}, {b, grad.multiply(*a)}};
+
+        }
+        std::vector<std::shared_ptr<TensorImpl>> parents() const override
+        {
+            return {a, b};
+        }
+
+
+    private:
+        std::shared_ptr<TensorImpl> a, b;
+    };
+
+    class MatMulBackward : public GradFn{
+    public:
+        MatMulBackward(std::shared_ptr<TensorImpl> lhs, std::shared_ptr<TensorImpl> rhs)
+        : lhs(std::move(lhs)), rhs(std::move(rhs)) {}
+
+        std::vector<GradResult> backward(const TensorImpl &grad) override {
+            // TODO: returns grad for parents that may not need it.
+            return {{lhs, grad.matmul(rhs->transpose())}, {rhs, lhs->transpose().matmul(grad)}};
+
+        }
+        std::vector<std::shared_ptr<TensorImpl>> parents() const override
+        {
+            return {lhs, rhs};
+        }
+
+
+    private:
+        std::shared_ptr<TensorImpl> lhs, rhs;
+    };
+
     TensorImpl::TensorImpl(const TensorImpl &other)
         : data(other.data),
           shape(other.shape),
@@ -132,8 +194,59 @@ namespace tinytensor
             result.data[i] = std::max(data[i], 0.f);
         }
 
+
         return result;
     }
+
+    TensorImpl TensorImpl::multiply(float scalar) const {
+        
+        TensorImpl result(shape);
+
+        for (size_t i = 0; i < data.size(); i++)
+        {
+            result.data[i] = data[i] * scalar;
+        }
+
+    }
+
+    TensorImpl TensorImpl::multiply(const TensorImpl &other) const
+    {
+        if (shape != other.shape)
+        {
+            throw std::invalid_argument("Tensors have different shapes");
+        }
+        TensorImpl result(shape);
+        for (size_t i = 0; i < data.size(); i++)
+        {
+            result.data[i] = data[i] * other.data[i];
+        }
+        return result;
+    };
+
+    TensorImpl TensorImpl::matmul(const TensorImpl &other) const
+    {
+        if (shape.size() != 2) // TODO: Support higher dimensions.
+        {
+            throw std::invalid_argument("matmul currently supports only 2D tensors");
+        }
+
+        if (shape[1] != other.shape[0]){
+            throw std::invalid_argument("tensors' shapes mismatch");
+        }
+
+        TensorImpl result({shape[0], other.shape[1]});
+        for (size_t i = 0; i < shape[0]; i++)
+        {
+            for (size_t j = 0; j < other.shape[1]; j++){
+                for (size_t k = 0; k < shape[1]; k++){
+                    result.data[i * other.shape[1] + j] += (data[i * shape[1] + k] * other.data[k * other.shape[1] + j]);
+                }
+            }
+        }
+        return result;
+    };
+
+
 
     Tensor::Tensor(std::vector<size_t> shape)
         : impl(std::make_shared<TensorImpl>(std::move(shape))) {};
@@ -150,6 +263,57 @@ namespace tinytensor
         result.impl->grad_fn = std::make_shared<AddBackward>(impl, other.impl);
         return result;
     }
+
+    Tensor Tensor::operator*(float scalar) const{
+        Tensor result(std::make_shared<TensorImpl>(impl->multiply(scalar)));
+
+        result.impl->requires_grad = impl->requires_grad;
+
+        if (result.impl->requires_grad){
+            result.impl->grad_fn = std::make_shared<ScalarMulBackward>(impl, scalar);
+        }
+
+        return result;
+    }
+
+    Tensor Tensor::operator-(const Tensor &other) const
+    {
+        auto result = (*this) + (other * (-1.0f));
+
+        
+        return result;
+    }
+
+
+
+
+
+    Tensor Tensor::operator*(const Tensor &other) const{
+        Tensor result(std::make_shared<TensorImpl>(impl->multiply(*other.impl)));
+
+        result.impl->requires_grad = impl->requires_grad || other.impl->requires_grad;
+
+        if (result.impl->requires_grad){
+            result.impl->grad_fn = std::make_shared<MulBackward>(impl, other);
+        }
+
+        return result;
+    }
+
+    Tensor Tensor::matmul (const Tensor &other) const {
+
+        Tensor result(std::make_shared<TensorImpl>(impl->matmul(*other.impl)));
+
+        result.impl->requires_grad = impl->requires_grad || other.impl->requires_grad;
+
+        if (result.impl->requires_grad){
+            result.impl->grad_fn = std::make_shared<MatMulBackward>(impl, other);
+        }
+
+        return result;
+
+    }
+
 
     Tensor Tensor::relu() const
     {
@@ -230,5 +394,6 @@ namespace tinytensor
         }
 
     }
+
 
 }

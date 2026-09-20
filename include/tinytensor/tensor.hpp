@@ -28,8 +28,11 @@ namespace tinytensor
 
         explicit TensorImpl(std::vector<size_t> shape);
         TensorImpl(const TensorImpl &other);
-
+        TensorImpl multiply(float scalar) const;
+        TensorImpl multiply(const TensorImpl &other) const;
+        TensorImpl matmul(const TensorImpl &other) const;
         TensorImpl add(const TensorImpl &other) const;
+        TensorImpl transpose() const;
         void add_inplace(const TensorImpl &other);
         TensorImpl relu() const;
         void accumulate_grad(const TensorImpl &gradient);
@@ -50,6 +53,10 @@ namespace tinytensor
         explicit Tensor(std::shared_ptr<TensorImpl> impl);
         explicit Tensor(std::vector<size_t> shape);
         Tensor operator+(const Tensor &other) const;
+        Tensor operator-(const Tensor &other) const;
+        Tensor operator*(const Tensor &other) const;
+        Tensor operator*(float scalar) const;
+        Tensor matmul(const Tensor& other) const;
         Tensor relu() const;
         void backward();
 
