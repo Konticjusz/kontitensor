@@ -4,6 +4,8 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include <span>
+
 
 namespace tinytensor
 {
@@ -19,6 +21,7 @@ namespace tinytensor
     public:
         std::vector<float> data;
         std::vector<size_t> shape;
+        std::vector<size_t> strides;
 
         bool requires_grad = false;
         std::unique_ptr<TensorImpl> grad;
@@ -34,6 +37,7 @@ namespace tinytensor
         TensorImpl add(const TensorImpl &other) const;
         TensorImpl transpose() const;
         void add_inplace(const TensorImpl &other);
+        size_t compute_offset(std::span<const size_t> indices) const;
         TensorImpl relu() const;
         void accumulate_grad(const TensorImpl &gradient);
     };

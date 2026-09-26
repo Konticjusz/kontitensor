@@ -127,6 +127,7 @@ namespace tinytensor
     TensorImpl::TensorImpl(const TensorImpl &other)
         : data(other.data),
           shape(other.shape),
+          strides(other.strides),
           requires_grad(false),
           grad(nullptr),
           grad_fn(nullptr) {}
@@ -141,8 +142,23 @@ namespace tinytensor
         {
             n *= dim;
         }
-
         data.resize(n);
+
+        strides.resize(this->shape.size());
+        if (strides.size()){
+            strides.back() = 1;
+            for (size_t i = this->shape.size() - 1; i > 0; i--){
+                strides[i-1] = strides[i] * this->shape[i];
+            }   
+        }
+    }
+
+    size_t TensorImpl::compute_offset(std::span<const size_t> indices) const {
+        size_t offset = 0;
+        for (size_t i = 0; i < indices.size(); i++){
+            offset += indices[i] * strides[i];
+        }
+        return offset;
     }
 
     void TensorImpl::accumulate_grad(const TensorImpl &gradient)
@@ -242,7 +258,9 @@ namespace tinytensor
         {
             for (size_t j = 0; j < other.shape[1]; j++){
                 for (size_t k = 0; k < shape[1]; k++){
-                    result.data[i * other.shape[1] + j] += (data[i * shape[1] + k] * other.data[k * other.shape[1] + j]);
+                    result.data[result.compute_offset(std::array{i,j})] += 
+                    (data[this->compute_offset(std::array{i,k})] * 
+                    other.data[other.compute_offset(std::array{k,j})]);
                 }
             }
         }
