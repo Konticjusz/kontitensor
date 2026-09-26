@@ -93,7 +93,7 @@ namespace tinytensor
 
         std::vector<GradResult> backward(const TensorImpl &grad) override {
             // TODO: returns grad for parents that may not need it.
-            return {{a, grad.multiply(*b)}, {b, grad.multiply(*a)}};
+            return {{a, grad.multiply(*b).sum_to_shape(a->shape)}, {b, grad.multiply(*a).sum_to_shape(b->shape)}};
 
         }
         std::vector<std::shared_ptr<TensorImpl>> parents() const override
@@ -260,17 +260,22 @@ namespace tinytensor
     }
 
     TensorImpl TensorImpl::multiply(const TensorImpl &other) const
-    {
-        if (shape != other.shape)
-        {
-            throw std::invalid_argument("Tensors have different shapes");
+    {   
+        // TODO fastpath for contigous 
+        auto result_shape = broadcast_shape(shape, other.shape);
+        TensorImpl result(result_shape);
+        auto a_strides = broadcast_strides(shape, strides, result_shape);
+        auto b_strides = broadcast_strides(other.shape, other.strides, result_shape);
+        
+        for (size_t i = 0; i < result.data.size(); i++){
+            // TODO change that vector indices isn't allocated each time.
+            std::vector<size_t> indices = linear_to_indices(i, result.shape);
+            result.data[result.compute_offset(indices)] = data[tinytensor::compute_offset(indices, a_strides)] 
+            * other.data[tinytensor::compute_offset(indices, b_strides)];
         }
-        TensorImpl result(shape);
-        for (size_t i = 0; i < data.size(); i++)
-        {
-            result.data[i] = data[i] * other.data[i];
-        }
+
         return result;
+
     };
 
     TensorImpl TensorImpl::matmul(const TensorImpl &other) const
