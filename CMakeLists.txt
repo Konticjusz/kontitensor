@@ -12,7 +12,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Library
 add_library(tinytensor
     src/tensor.cpp
-    include/tinytensor/tensor.hpp
+    src/shape.cpp
 )
 
 target_include_directories(tinytensor
@@ -42,4 +42,15 @@ target_compile_options(test_tensor
         -Wall
         -Wextra
         -Wpedantic
+)
+
+# Tests
+enable_testing()
+
+
+target_link_libraries(test_tensor PRIVATE tinytensor)
+
+add_test(
+    NAME tensor_tests
+    COMMAND test_tensor
 )

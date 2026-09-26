@@ -40,6 +40,7 @@ namespace tinytensor
         size_t compute_offset(std::span<const size_t> indices) const;
         TensorImpl relu() const;
         void accumulate_grad(const TensorImpl &gradient);
+        TensorImpl sum_to_shape(std::span<const size_t> target_shape) const;
     };
 
     class GradFn

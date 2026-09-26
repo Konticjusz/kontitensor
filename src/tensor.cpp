@@ -6,6 +6,8 @@
 #include <unordered_map>
 
 #include <tinytensor/tensor.hpp>
+#include <tinytensor/shape.hpp>
+
 
 namespace tinytensor
 {
@@ -19,7 +21,7 @@ namespace tinytensor
         std::vector<GradResult> backward(const TensorImpl &grad) override
         {
 
-            return {{a, grad}, {b, grad}};
+            return {{a, grad.sum_to_shape(a->shape)}, {b, grad.sum_to_shape(b->shape)}};
         }
 
         std::vector<std::shared_ptr<TensorImpl>> parents() const override
@@ -178,18 +180,47 @@ namespace tinytensor
         }
     }
 
+    TensorImpl TensorImpl::sum_to_shape(std::span<const size_t> target_shape) const {
+                TensorImpl res(std::vector<size_t>(target_shape.begin(), target_shape.end()));
+                std::vector<size_t> new_indices(target_shape.size());
+                size_t diff = shape.size() - target_shape.size();
+                for (size_t linear = 0; linear < data.size(); linear++){
+                    std::vector<size_t> indices = linear_to_indices(linear, shape);
+                    for (size_t i = diff; i < shape.size(); i++){
+                        if (target_shape[i - diff] != shape[i]){
+                            new_indices[i - diff] = 0;
+                        }
+                        else{
+                            new_indices[i - diff] = indices[i];
+                        }
+                    }
+                    res.data[res.compute_offset(new_indices)] += data[compute_offset(indices)];
+                }
+                return res;
+            };
+
+
+
+
+                    
+
     TensorImpl TensorImpl::add(const TensorImpl &other) const
-    {
-        if (shape != other.shape)
-        {
-            throw std::invalid_argument("Tensors have different shapes");
+    {   
+        // TODO fastpath for contigous 
+        auto result_shape = broadcast_shape(shape, other.shape);
+        TensorImpl result(result_shape);
+        auto a_strides = broadcast_strides(shape, strides, result_shape);
+        auto b_strides = broadcast_strides(other.shape, other.strides, result_shape);
+        
+        for (size_t i = 0; i < result.data.size(); i++){
+            // TODO change that vector indices isn't allocated each time.
+            std::vector<size_t> indices = linear_to_indices(i, result.shape);
+            result.data[result.compute_offset(indices)] = data[tinytensor::compute_offset(indices, a_strides)] 
+            + other.data[tinytensor::compute_offset(indices, b_strides)];
         }
-        TensorImpl result(shape);
-        for (size_t i = 0; i < data.size(); i++)
-        {
-            result.data[i] = data[i] + other.data[i];
-        }
+
         return result;
+
     };
 
     void TensorImpl::add_inplace(const TensorImpl &other){
