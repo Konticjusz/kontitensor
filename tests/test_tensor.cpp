@@ -3,6 +3,8 @@
 #include <iostream>
 #include <tinytensor/tensor.hpp>
 #include <tinytensor/shape.hpp>
+#include <tinytensor/optimizer.hpp>
+
 
 using namespace tinytensor;
 
@@ -92,11 +94,17 @@ void test_tensors(){
     Tensor B2({10}, true);
     Tensor pred({64,10});
 
-    Tensor output = (batch.matmul(W1) + B1).relu();
-    output = (output.matmul(W2) + B2);
-    Tensor diff = output - pred;
-    Tensor loss = (diff * diff).mean();
-    loss.backward();
+    SGD optim(0.001f, {&W1, &B1, &W2, &B2});
+    
+    for (size_t iterations = 0; iterations < 10; iterations++){
+        optim.zero_grad();
+        Tensor output = (batch.matmul(W1) + B1).relu();
+        output = (output.matmul(W2) + B2);
+        Tensor diff = output - pred;
+        Tensor loss = (diff * diff).mean();
+        loss.backward();
+        optim.step();
+    }
 }
 
 int main(){

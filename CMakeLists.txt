@@ -13,6 +13,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 add_library(tinytensor
     src/tensor.cpp
     src/shape.cpp
+    src/optimizer.cpp
 )
 
 target_include_directories(tinytensor

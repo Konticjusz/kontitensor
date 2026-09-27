@@ -192,7 +192,7 @@ namespace tinytensor
         }
         if (grad == nullptr)
         {
-            grad = std::make_unique<TensorImpl>(gradient.shape);
+            grad = std::make_shared<TensorImpl>(gradient.shape);
         }
         for (size_t i = 0; i < gradient.data.size(); i++)
         {
@@ -542,6 +542,25 @@ namespace tinytensor
         }
 
     }
+
+    Tensor Tensor::grad() const{
+        return Tensor(impl->grad);
+    }
+
+    void Tensor::add_(const Tensor& other, float alpha){
+        impl->add_inplace(other.impl->multiply(alpha));
+    }
+
+    void Tensor::zero_grad(){
+        if (!impl->grad){
+            return;
+        }
+        for (auto& elem: impl->grad->data){
+            elem = 0.0f;
+        }
+    }
+
+
 
 
 }

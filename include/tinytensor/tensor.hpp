@@ -24,7 +24,7 @@ namespace tinytensor
         std::vector<size_t> strides;
 
         bool requires_grad = false;
-        std::unique_ptr<TensorImpl> grad;
+        std::shared_ptr<TensorImpl> grad;
         std::shared_ptr<GradFn> grad_fn;
 
         std::vector<std::shared_ptr<TensorImpl>> build_topo() const;
@@ -67,7 +67,11 @@ namespace tinytensor
         Tensor relu() const;
         Tensor mean() const;
         Tensor sum() const;
+
         void backward();
+        void add_(const Tensor& other, float alpha = 1.0f);
+        void zero_grad();
+        Tensor grad() const;
 
     private:
         std::shared_ptr<TensorImpl> impl;
