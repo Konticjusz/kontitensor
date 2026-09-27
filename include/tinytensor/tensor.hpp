@@ -59,6 +59,7 @@ namespace tinytensor
     public:
         explicit Tensor(std::shared_ptr<TensorImpl> impl);
         explicit Tensor(std::vector<size_t> shape, bool requires_grad = false);
+        explicit Tensor(std::vector<float> data, std::vector<size_t> shape, bool requires_grad = false);
         Tensor operator+(const Tensor &other) const;
         Tensor operator-(const Tensor &other) const;
         Tensor operator*(const Tensor &other) const;
@@ -67,11 +68,14 @@ namespace tinytensor
         Tensor relu() const;
         Tensor mean() const;
         Tensor sum() const;
+        float item() const;
 
         void backward();
         void add_(const Tensor& other, float alpha = 1.0f);
         void zero_grad();
         Tensor grad() const;
+
+        static Tensor kaiming_normal(std::vector<size_t> shape, bool requires_grad = false);
 
     private:
         std::shared_ptr<TensorImpl> impl;

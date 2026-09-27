@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <unordered_set>
 #include <unordered_map>
+#include <cmath>
+#include <random>
 
 #include <tinytensor/tensor.hpp>
 #include <tinytensor/shape.hpp>
@@ -381,6 +383,15 @@ namespace tinytensor
     Tensor::Tensor(std::shared_ptr<TensorImpl> impl)
         : impl(std::move(impl)) {};
 
+    Tensor::Tensor(std::vector<float> data, std::vector<size_t> shape, bool requires_grad)
+        : impl(std::make_shared<TensorImpl>(std::move(shape))) {
+            if (data.size() != impl->data.size()) {
+                throw std::invalid_argument("Data size does not match tensor shape");
+            }
+            impl->requires_grad = requires_grad;
+            impl->data = std::move(data);
+        }
+
     Tensor Tensor::operator+(const Tensor &other) const
     {
         auto tmp = std::make_shared<TensorImpl>(impl->add(*other.impl));
@@ -473,6 +484,14 @@ namespace tinytensor
         return result;
     }
 
+
+    float Tensor::item() const{
+        if (impl->data.size() != 1){
+            throw std::runtime_error("item() requires a tensor with one element");
+        }
+        return impl->data[0];
+    }
+
     namespace
     {
         void build_topo(
@@ -558,6 +577,33 @@ namespace tinytensor
         for (auto& elem: impl->grad->data){
             elem = 0.0f;
         }
+    }
+
+    Tensor Tensor::kaiming_normal(std::vector<size_t> shape, bool requires_grad){
+        if (shape.size() < 2){
+            throw std::invalid_argument("Kaiming initialization requires at least 2D tensor");
+        }
+
+        size_t fan_in = shape[0];
+
+        float stddev = std::sqrt(2.0f / static_cast<float>(fan_in));
+
+        size_t numel = 1;
+        for (size_t dim: shape){
+            numel *= dim;
+        }
+
+        std::vector<float> data(numel);
+
+        static std::mt19937 rng(std::random_device{}());
+        std::normal_distribution<float> dist(0.0f, stddev);
+
+        for (auto& elem: data){
+            elem = dist(rng);
+
+        }
+        
+        return Tensor(std::move(data), std::move(shape), requires_grad);
     }
 
 

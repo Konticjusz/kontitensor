@@ -7,12 +7,16 @@
 #include <fstream>
 #include <stdexcept>
 #include <vector>
+#include <random>
+#include <numeric>
 
 
 #include <tinytensor/tensor.hpp>
 #include <tinytensor/shape.hpp>
 #include <tinytensor/optimizer.hpp>
+#include <iostream>
 
+using namespace tinytensor;
 
 uint32_t read_u32_be(std::ifstream& file){
     // reads from big endian u32
@@ -78,12 +82,101 @@ MNISTDataset load_mnist(const std::string& images_path, const std::string& label
         dataset.images[i] = static_cast<float>(pixel) / 255.0f;
     }
 
-    labels_file.read(reinterpret_cast<char*>(dataset.labels.data(), dataset.labels.size()));
+    labels_file.read(reinterpret_cast<char*>(dataset.labels.data()), dataset.labels.size());
+
+    return dataset;
 }
+
+struct Batch {
+    Tensor images;
+    Tensor labels;
+};
+
+class MNISTLoader{
+    public:
+        MNISTLoader(const MNISTDataset& dataset, size_t batch_size)
+        : dataset(dataset), batch_size(batch_size) {
+            reset();
+        }
+
+        void reset(){
+            indices.resize(dataset.size);
+            std::iota(indices.begin(), indices.end(), 0);
+            std::shuffle(indices.begin(), indices.end(), rng);
+            position = 0;
+        }
+
+        bool has_next() const{
+            return position < dataset.size;
+        }
+
+        Batch next(){
+            if (position >= dataset.size) {
+                throw std::out_of_range("No more batches");
+            }
+            size_t current_batch_size = std::min(batch_size, dataset.size - position);
+            size_t num_pixels = dataset.rows * dataset.cols;
+            std::vector<float> image_data(current_batch_size*num_pixels);
+            std::vector<float> label_data(current_batch_size*10);
+            for (size_t i = 0; i < current_batch_size; i++){
+                size_t idx = indices[position + i];
+                label_data[i * 10 + dataset.labels[idx]] = 1.0f;
+                for (size_t j = 0; j < num_pixels; j++){
+                    image_data[i * num_pixels + j] = dataset.images[idx * num_pixels + j];
+                }
+            }
+            position += current_batch_size;
+            Batch batch{
+                Tensor(std::move(image_data), {current_batch_size, num_pixels}),
+                Tensor(std::move(label_data), {current_batch_size, 10})};
+            return batch;
+        }
+
+
+
+
+    private:
+        const MNISTDataset& dataset;
+        size_t batch_size;
+        size_t position = 0;
+
+        std::vector<size_t> indices;
+        std::mt19937 rng{std::random_device{}()};
+
+};
 
 int main(){
     auto train = load_mnist(
         "data/mnist/train-images-idx3-ubyte",
         "data/mnist/train-labels-idx1-ubyte"
     );    
+    auto train_loader = MNISTLoader(train, 64);
+    Tensor W1 = Tensor::kaiming_normal({784, 256}, true);
+    Tensor B1({256}, true);
+    Tensor W2 = Tensor::kaiming_normal({256, 128}, true);
+    Tensor B2({128}, true);
+    Tensor W3 = Tensor::kaiming_normal({128, 10}, true);
+    Tensor B3({10}, true);
+
+    SGD optim(0.01f, {&W1, &B1, &W2, &B2, &W3, &B3});
+
+    for (size_t iterations = 0; iterations < 2; iterations++){
+        train_loader.reset();
+        size_t batch_num = 0;
+        while (train_loader.has_next()){
+            optim.zero_grad();
+            Batch batch = train_loader.next();
+            Tensor output = (batch.images.matmul(W1) + B1).relu();
+            output = (output.matmul(W2) + B2).relu();
+            output = (output.matmul(W3) + B3);
+
+            Tensor diff = (output - batch.labels);
+            Tensor loss = (diff * diff).mean();
+            loss.backward();
+            optim.step();
+            std::cout << "Batches proccessed so far: " << ++batch_num << " Loss: " << loss.item() << std::endl;
+        }
+    }
+    return 0;
+
 }

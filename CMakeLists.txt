@@ -33,10 +33,12 @@ add_executable(test_tensor
     tests/test_tensor.cpp
 )
 
+
 target_link_libraries(test_tensor
     PRIVATE
         tinytensor
 )
+
 
 target_compile_options(test_tensor
     PRIVATE
@@ -55,3 +57,9 @@ add_test(
     NAME tensor_tests
     COMMAND test_tensor
 )
+
+add_executable(mnist
+    examples/mnist.cpp
+)
+
+target_link_libraries(mnist PRIVATE tinytensor)

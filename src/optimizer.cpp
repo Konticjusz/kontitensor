@@ -16,7 +16,7 @@ namespace tinytensor{
 
     void SGD::step(){
         for (auto param: parameters){
-            param->add_(param->grad(), lr);
+            param->add_(param->grad(), -lr);
         }
     }
 
