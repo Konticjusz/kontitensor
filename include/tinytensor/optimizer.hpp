@@ -1,33 +1,29 @@
 #pragma once
 
-#include <stdexcept>
-#include <vector>
 #include <memory>
-#include <utility>
 #include <span>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
+namespace tinytensor {
 
-namespace tinytensor{
+class Optimizer {
+public:
+  virtual ~Optimizer() = default;
+  virtual void step() = 0;
+  virtual void zero_grad() = 0;
+};
 
-    class Optimizer{
-        public:
+class SGD : public Optimizer {
+public:
+  explicit SGD(float lr, std::vector<Tensor *> parameters);
+  void step() override;
+  void zero_grad() override;
 
-            virtual ~Optimizer() = default;
-            virtual void step() = 0;
-            virtual void zero_grad() = 0;
-    };
+private:
+  float lr;
+  std::vector<Tensor *> parameters;
+};
 
-    class SGD : public Optimizer{
-        public:
-            explicit SGD(float lr, std::vector<Tensor*> parameters);
-            void step() override;
-            void zero_grad() override;
-        
-        private:
-            float lr;
-            std::vector<Tensor*> parameters;
-
-    };
-
-    
-}
+} // namespace tinytensor

@@ -1,28 +1,27 @@
+#include <algorithm>
+#include <memory>
+#include <span>
 #include <stdexcept>
 #include <vector>
-#include <memory>
-#include <algorithm>
-#include <span>
 
-#include <tinytensor/tensor.hpp>
-#include <tinytensor/shape.hpp>
 #include <tinytensor/optimizer.hpp>
+#include <tinytensor/shape.hpp>
+#include <tinytensor/tensor.hpp>
 
+namespace tinytensor {
 
-namespace tinytensor{
+SGD::SGD(float lr, std::vector<Tensor *> params)
+    : lr(lr), parameters(std::move(params)) {}
 
-    SGD::SGD(float lr, std::vector<Tensor*> params)
-        : lr(lr), parameters(std::move(params)){}
+void SGD::step() {
+  for (auto param : parameters) {
+    param->add_(param->grad(), -lr);
+  }
+}
 
-    void SGD::step(){
-        for (auto param: parameters){
-            param->add_(param->grad(), -lr);
-        }
-    }
-
-    void SGD::zero_grad(){
-        for (auto param: parameters){
-            param->zero_grad();
-        } 
-    }
-    }
+void SGD::zero_grad() {
+  for (auto param : parameters) {
+    param->zero_grad();
+  }
+}
+} // namespace tinytensor
