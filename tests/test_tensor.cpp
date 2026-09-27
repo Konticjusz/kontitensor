@@ -84,8 +84,24 @@ void test_broadcast_add_column()
     assert(result.data == expected);
 }
 
+void test_tensors(){
+    Tensor batch({64, 100});
+    Tensor W1({100, 50}, true);
+    Tensor B1({50}, true);
+    Tensor W2({50, 10}, true);
+    Tensor B2({10}, true);
+    Tensor pred({64,10});
+
+    Tensor output = (batch.matmul(W1) + B1).relu();
+    output = (output.matmul(W2) + B2);
+    Tensor diff = output - pred;
+    Tensor loss = (diff * diff).mean();
+    loss.backward();
+}
+
 int main(){
     test_matmul();
     test_broadcast_add();
     test_broadcast_add_column();
+    test_tensors();
 }

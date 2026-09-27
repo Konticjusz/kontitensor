@@ -219,6 +219,30 @@ namespace tinytensor
                 return res;
             };
 
+    
+    TensorImpl TensorImpl::broadcast_to(std::span<const size_t> target_shape) const{
+                TensorImpl result(std::vector<size_t>{target_shape.begin(), target_shape.end()});
+                std::vector<size_t> curr_indices(shape.size()); // indices from which we will access data from current tensor.
+                size_t diff = target_shape.size() - shape.size();
+                for (size_t linear_idx = 0; linear_idx < result.data.size(); linear_idx++){
+                    std::vector<size_t> indices = linear_to_indices(linear_idx, target_shape);
+                    for (size_t i = diff; i < target_shape.size(); i++){
+                        if (target_shape[i] == shape[i - diff]){
+                            curr_indices[i - diff] = indices[i];
+                        }
+                        else if (shape[i-diff] == 1){
+                            curr_indices[i - diff] = 0;
+                        }
+                        else{
+                            throw std::invalid_argument(" Shapes are not broadcastable. ");
+                        }
+                    }
+                    result.data[result.compute_offset(indices)] = data[compute_offset(curr_indices)];
+                }
+                return result;
+            }
+
+
 
 
 
@@ -337,8 +361,22 @@ namespace tinytensor
         return result;
     }
 
-    Tensor::Tensor(std::vector<size_t> shape)
-        : impl(std::make_shared<TensorImpl>(std::move(shape))) {};
+    TensorImpl TensorImpl::sum () const{
+        TensorImpl result({1});
+        float sum = 0.0f;
+        for (float elem: data){
+            sum += elem;
+        }
+        result.data[0] = sum;
+        return result;
+    }
+
+
+
+    Tensor::Tensor(std::vector<size_t> shape, bool requires_grad)
+        : impl(std::make_shared<TensorImpl>(std::move(shape))) {
+            impl->requires_grad = requires_grad;
+        };
 
     Tensor::Tensor(std::shared_ptr<TensorImpl> impl)
         : impl(std::move(impl)) {};
@@ -424,6 +462,15 @@ namespace tinytensor
         }
         return result;
         
+    }
+
+
+    Tensor Tensor::mean() const{
+        if (impl->data.size() == 0){
+            throw std::invalid_argument( "Tensor has no elements. ");
+        }
+        auto result = sum() * (1.0f / (float) impl->data.size());
+        return result;
     }
 
     namespace

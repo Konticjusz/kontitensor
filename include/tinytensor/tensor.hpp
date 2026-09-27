@@ -38,7 +38,6 @@ namespace tinytensor
         TensorImpl transpose() const;
         TensorImpl broadcast_to(std::span<const size_t> target_shape) const;
         TensorImpl sum() const;
-        TensorImpl div(float scalar) const;
         void add_inplace(const TensorImpl &other);
         size_t compute_offset(std::span<const size_t> indices) const;
         TensorImpl relu() const;
@@ -59,7 +58,7 @@ namespace tinytensor
 
     public:
         explicit Tensor(std::shared_ptr<TensorImpl> impl);
-        explicit Tensor(std::vector<size_t> shape);
+        explicit Tensor(std::vector<size_t> shape, bool requires_grad = false);
         Tensor operator+(const Tensor &other) const;
         Tensor operator-(const Tensor &other) const;
         Tensor operator*(const Tensor &other) const;
