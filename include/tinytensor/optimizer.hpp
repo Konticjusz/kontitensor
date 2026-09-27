@@ -1,12 +1,12 @@
 #pragma once
 
-#include <memory>
-#include <span>
-#include <stdexcept>
-#include <utility>
+
 #include <vector>
 
 namespace tinytensor {
+
+class Tensor;
+
 
 class Optimizer {
 public:
@@ -17,7 +17,7 @@ public:
 
 class SGD : public Optimizer {
 public:
-  explicit SGD(float lr, std::vector<Tensor *> parameters);
+  explicit SGD(float lr, std::vector<Tensor*> parameters);
   void step() override;
   void zero_grad() override;
 

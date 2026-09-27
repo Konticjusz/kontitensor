@@ -292,8 +292,8 @@ TensorImpl TensorImpl::matmul(const TensorImpl &other) const {
 
   TensorImpl result({shape[0], other.shape[1]});
   for (size_t i = 0; i < shape[0]; i++) {
-    for (size_t j = 0; j < other.shape[1]; j++) {
-      for (size_t k = 0; k < shape[1]; k++) {
+    for (size_t k = 0; k < shape[1]; k++) {
+        for (size_t j = 0; j < other.shape[1]; j++) {
         result.data[result.compute_offset(std::array{i, j})] +=
             (data[this->compute_offset(std::array{i, k})] *
              other.data[other.compute_offset(std::array{k, j})]);
