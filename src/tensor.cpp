@@ -126,6 +126,26 @@ namespace tinytensor
         std::shared_ptr<TensorImpl> lhs, rhs;
     };
 
+
+    class SumBackward : public GradFn{
+        public:
+            SumBackward(std::shared_ptr<TensorImpl> parent)
+            : parent(std::move(parent)) {}
+
+            std::vector<GradResult> backward(const TensorImpl &grad) override {
+                return {{parent, grad.broadcast_to(parent->shape)}};
+            }
+
+            std::vector<std::shared_ptr<TensorImpl>> parents() const override{
+                return {parent};
+            }
+
+        
+        private:
+            std::shared_ptr<TensorImpl> parent;
+
+    };
+
     TensorImpl::TensorImpl(const TensorImpl &other)
         : data(other.data),
           shape(other.shape),
@@ -392,6 +412,18 @@ namespace tinytensor
         result.impl->requires_grad = impl->requires_grad;
         result.impl->grad_fn = std::make_shared<ReluBackward>(impl);
         return result;
+    }
+
+
+    Tensor Tensor::sum() const{
+        auto tmp = std::make_shared<TensorImpl>(impl->sum());
+        Tensor result(tmp);
+        if (impl->requires_grad){
+            result.impl->requires_grad = true;
+            result.impl->grad_fn = std::make_shared<SumBackward>(impl);
+        }
+        return result;
+        
     }
 
     namespace

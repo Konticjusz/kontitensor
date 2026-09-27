@@ -36,6 +36,9 @@ namespace tinytensor
         TensorImpl matmul(const TensorImpl &other) const;
         TensorImpl add(const TensorImpl &other) const;
         TensorImpl transpose() const;
+        TensorImpl broadcast_to(std::span<const size_t> target_shape) const;
+        TensorImpl sum() const;
+        TensorImpl div(float scalar) const;
         void add_inplace(const TensorImpl &other);
         size_t compute_offset(std::span<const size_t> indices) const;
         TensorImpl relu() const;
@@ -63,6 +66,8 @@ namespace tinytensor
         Tensor operator*(float scalar) const;
         Tensor matmul(const Tensor& other) const;
         Tensor relu() const;
+        Tensor mean() const;
+        Tensor sum() const;
         void backward();
 
     private:
