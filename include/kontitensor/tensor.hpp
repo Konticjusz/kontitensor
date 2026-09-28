@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace tinytensor {
+namespace kontitensor {
 
 class TensorImpl;
 class GradFn;
@@ -77,4 +77,4 @@ private:
   std::shared_ptr<TensorImpl> impl;
 };
 
-} // namespace tinytensor
+} // namespace kontitensor

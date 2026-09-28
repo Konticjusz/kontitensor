@@ -3,7 +3,7 @@
 
 #include <vector>
 
-namespace tinytensor {
+namespace kontitensor {
 
 class Tensor;
 
@@ -26,4 +26,4 @@ private:
   std::vector<Tensor *> parameters;
 };
 
-} // namespace tinytensor
+} // namespace kontitensor

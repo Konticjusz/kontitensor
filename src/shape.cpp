@@ -4,10 +4,10 @@
 #include <stdexcept>
 #include <vector>
 
-#include <tinytensor/shape.hpp>
-#include <tinytensor/tensor.hpp>
+#include <kontitensor/shape.hpp>
+#include <kontitensor/tensor.hpp>
 
-namespace tinytensor {
+namespace kontitensor {
 
 Shape broadcast_shape(std::span<const size_t> a, std::span<const size_t> b) {
   if (b.size() > a.size()) {
@@ -73,4 +73,4 @@ std::vector<size_t> linear_to_indices(size_t linear,
   return indices;
 }
 
-} // namespace tinytensor
+} // namespace kontitensor

@@ -6,7 +6,7 @@
 #include <utility>
 #include <vector>
 
-namespace tinytensor {
+namespace kontitensor {
 
 using Shape = std::vector<size_t>;
 using Strides = std::vector<size_t>;
@@ -20,4 +20,4 @@ size_t compute_offset(std::span<const size_t> indices,
 std::vector<size_t> linear_to_indices(size_t linear,
                                       std::span<const size_t> shape);
 
-} // namespace tinytensor
+} // namespace kontitensor

@@ -1,11 +1,11 @@
 #include <cassert>
 #include <cmath>
 #include <iostream>
-#include <tinytensor/optimizer.hpp>
-#include <tinytensor/shape.hpp>
-#include <tinytensor/tensor.hpp>
+#include <kontitensor/optimizer.hpp>
+#include <kontitensor/shape.hpp>
+#include <kontitensor/tensor.hpp>
 
-using namespace tinytensor;
+using namespace kontitensor;
 
 void test_matmul() {
   TensorImpl a({2, 3});

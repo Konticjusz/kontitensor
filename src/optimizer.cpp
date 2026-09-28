@@ -4,11 +4,11 @@
 #include <stdexcept>
 #include <vector>
 
-#include <tinytensor/optimizer.hpp>
-#include <tinytensor/shape.hpp>
-#include <tinytensor/tensor.hpp>
+#include <kontitensor/optimizer.hpp>
+#include <kontitensor/shape.hpp>
+#include <kontitensor/tensor.hpp>
 
-namespace tinytensor {
+namespace kontitensor {
 
 SGD::SGD(float lr, std::vector<Tensor *> params)
     : lr(lr), parameters(std::move(params)) {}
@@ -24,4 +24,4 @@ void SGD::zero_grad() {
     param->zero_grad();
   }
 }
-} // namespace tinytensor
+} // namespace kontitensor

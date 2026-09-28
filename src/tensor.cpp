@@ -7,10 +7,10 @@
 #include <unordered_set>
 #include <vector>
 
-#include <tinytensor/shape.hpp>
-#include <tinytensor/tensor.hpp>
+#include <kontitensor/shape.hpp>
+#include <kontitensor/tensor.hpp>
 
-namespace tinytensor {
+namespace kontitensor {
 
 class AddBackward : public GradFn {
 public:
@@ -225,8 +225,8 @@ TensorImpl TensorImpl::add(const TensorImpl &other) const {
     // TODO change that vector indices isn't allocated each time.
     std::vector<size_t> indices = linear_to_indices(i, result.shape);
     result.data[result.compute_offset(indices)] =
-        data[tinytensor::compute_offset(indices, a_strides)] +
-        other.data[tinytensor::compute_offset(indices, b_strides)];
+        data[kontitensor::compute_offset(indices, a_strides)] +
+        other.data[kontitensor::compute_offset(indices, b_strides)];
   }
 
   return result;
@@ -273,8 +273,8 @@ TensorImpl TensorImpl::multiply(const TensorImpl &other) const {
     // TODO change that vector indices isn't allocated each time.
     std::vector<size_t> indices = linear_to_indices(i, result.shape);
     result.data[result.compute_offset(indices)] =
-        data[tinytensor::compute_offset(indices, a_strides)] *
-        other.data[tinytensor::compute_offset(indices, b_strides)];
+        data[kontitensor::compute_offset(indices, a_strides)] *
+        other.data[kontitensor::compute_offset(indices, b_strides)];
   }
 
   return result;
@@ -531,4 +531,4 @@ Tensor Tensor::kaiming_normal(std::vector<size_t> shape, bool requires_grad) {
   return Tensor(std::move(data), std::move(shape), requires_grad);
 }
 
-} // namespace tinytensor
+} // namespace kontitensor

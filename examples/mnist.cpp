@@ -9,11 +9,11 @@
 #include <vector>
 
 #include <iostream>
-#include <tinytensor/optimizer.hpp>
-#include <tinytensor/shape.hpp>
-#include <tinytensor/tensor.hpp>
+#include <kontitensor/optimizer.hpp>
+#include <kontitensor/shape.hpp>
+#include <kontitensor/tensor.hpp>
 
-using namespace tinytensor;
+using namespace kontitensor;
 
 uint32_t read_u32_be(std::ifstream &file) {
   // reads from big endian u32
@@ -149,7 +149,7 @@ int main() {
 
   SGD optim(0.01f, {&W1, &B1, &W2, &B2, &W3, &B3});
 
-  for (size_t iterations = 0; iterations < 2; iterations++) {
+  for (size_t iterations = 0; iterations < 1; iterations++) {
     train_loader.reset();
     size_t batch_num = 0;
     while (train_loader.has_next()) {

@@ -1,6 +1,6 @@
-# TinyTensor
+# KontiTensor
 
-TinyTensor is a small C++ tensor and autograd library built from scratch for learning purposes.
+KontiTensor is a small C++ tensor and autograd library built from scratch for learning purposes.
 
 ## Features
 
